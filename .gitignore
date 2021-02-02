@@ -1,6 +1,7 @@
 # Nate stuff
 archive/
 quirkle.html
+data/*.xlsx
 
 # History files
 .Rhistory
