@@ -1,7 +1,6 @@
 ---
 title: "Quirkle Scores"
 author: "Nathan Hoteling"
-date: "`r format(Sys.time(), '%B %d, %Y')`"
 output: html_document
 ---
 
@@ -17,24 +16,29 @@ library(tidyr)
 Scores from family Quirkle matches, last updated <b> `r format(Sys.time(), '%B %d, %Y')` </b>.
 
 ```{r, echo=FALSE, message=FALSE, warning=FALSE, include=FALSE}
+# Function to remove "T" from date string
+# "T" is appended to the date string so Excel doesn't
+# mess it up when the file is opened
 rmT <- function(fstr) { stringr::str_replace(fstr, "T", "") }
 
+# Read data file
 df.raw <- read.csv("data/quirklescores.csv", header=TRUE) %>%
   mutate(date = ymd(rmT(date)))
 
+# Cumulative scores
 matches <- unique(df.raw$match)
 d <- lapply(seq_along(matches), function(i) {
   df <- df.raw %>% filter(match == matches[i])
-  df$Lucas <- cumsum(df$Lu)
-  df$Crystal <- cumsum(df$Cr)
-  df$Connor <- cumsum(df$Co)
-  df$Nate <- cumsum(df$Na)
+  df$CLu <- cumsum(df$Lu)
+  df$CCr <- cumsum(df$Cr)
+  df$CCo <- cumsum(df$Co)
+  df$CNa <- cumsum(df$Na)
   return(df)
 })
 df.scores <- do.call(rbind,d)
 
+# Rearrange for plotting
 df.quirkle <- df.scores %>% 
-  #filter(match == 9) %>%
   select(match, round, Lu, Cr, Co, Na) %>%
   pivot_longer(cols = c("Lu", "Cr", "Co", "Na")) %>%
   mutate(name = factor(name, levels = c("Co","Lu","Cr","Na")))
@@ -42,11 +46,14 @@ df.quirkle <- df.scores %>%
 
 
 ```{r, echo=FALSE, message=FALSE, warning=FALSE, include=FALSE}
+# Useful parameters
 df.totals <- df.quirkle %>% group_by(match, name) %>% summarise(score = sum(value, na.rm=TRUE))
 max_round <- max(df.quirkle$round)
 max_value <- max(df.quirkle$value, na.rm=TRUE)
 max_score <- max(df.totals$score)
 
+# First try at the figure, with circles... 
+# this one didn't make the cut
 p1 <- ggplot(df.quirkle, aes(group=match)) +
   geom_point(aes(x=round, y=name, size=value, color=name, alpha=value)) +
   scale_size_area(max_size=8) +
@@ -62,6 +69,7 @@ p1 <- ggplot(df.quirkle, aes(group=match)) +
   legend.position = "none",
   axis.text.y = element_blank())
 
+# Summary figure
 p2 <- ggplot(df.quirkle, aes(group=match)) +
   geom_rect(aes(xmin=round-0.5*value/max_value, xmax=round+0.5*value/max_value, 
                 ymin=as.integer(name), ymax=as.integer(name)+1, 
@@ -87,11 +95,13 @@ p2 <- ggplot(df.quirkle, aes(group=match)) +
 ```
 
 ```{r, echo=FALSE, message=FALSE, warning=FALSE, fig.width=6, fig.height=8}
+# Draw the figure in the document
 p2
 ```
 
 ```{r, include=FALSE, echo=FALSE, warning=FALSE, message=FALSE}
-
+# Some additional testing
+# ...more to do here...
 df.test <- df.quirkle %>% 
   group_by(round) %>% 
   summarise(md = median(value, na.rm=TRUE), sd = sd(value, na.rm=TRUE),
@@ -113,7 +123,4 @@ p3 <- ggplot(df.quirkle) +
   theme_minimal()
 ```
 
-```{r, warning=FALSE, message=FALSE}
-df.quirkle %>% group_by(name) %>% summarise(score = sum(value, na.rm=TRUE)) %>% arrange(desc(score))
-```
 
