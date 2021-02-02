@@ -1,0 +1,119 @@
+---
+title: "Quirkle Scores"
+author: "Nathan Hoteling"
+date: "`r format(Sys.time(), '%B %d, %Y')`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(ggplot2)
+library(lubridate)
+library(dplyr)
+library(tidyr)
+```
+
+Scores from family Quirkle matches, last updated <b> `r format(Sys.time(), '%B %d, %Y')` </b>.
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE, include=FALSE}
+rmT <- function(fstr) { stringr::str_replace(fstr, "T", "") }
+
+df.raw <- read.csv("data/quirklescores.csv", header=TRUE) %>%
+  mutate(date = ymd(rmT(date)))
+
+matches <- unique(df.raw$match)
+d <- lapply(seq_along(matches), function(i) {
+  df <- df.raw %>% filter(match == matches[i])
+  df$Lucas <- cumsum(df$Lu)
+  df$Crystal <- cumsum(df$Cr)
+  df$Connor <- cumsum(df$Co)
+  df$Nate <- cumsum(df$Na)
+  return(df)
+})
+df.scores <- do.call(rbind,d)
+
+df.quirkle <- df.scores %>% 
+  #filter(match == 9) %>%
+  select(match, round, Lu, Cr, Co, Na) %>%
+  pivot_longer(cols = c("Lu", "Cr", "Co", "Na")) %>%
+  mutate(name = factor(name, levels = c("Co","Lu","Cr","Na")))
+```
+
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE, include=FALSE}
+df.totals <- df.quirkle %>% group_by(match, name) %>% summarise(score = sum(value, na.rm=TRUE))
+max_round <- max(df.quirkle$round)
+max_value <- max(df.quirkle$value, na.rm=TRUE)
+max_score <- max(df.totals$score)
+
+p1 <- ggplot(df.quirkle, aes(group=match)) +
+  geom_point(aes(x=round, y=name, size=value, color=name, alpha=value)) +
+  scale_size_area(max_size=8) +
+  facet_wrap(~match, ncol=1) +
+  labs(x="Round", y = "") +
+  geom_rect(data=df.totals, 
+            aes(xmin = max_round+1, xmax = max_round+1+3*score/max_score,
+                ymin = as.integer(name), ymax = as.integer(name)+1,
+                fill=name, color=name), alpha=0.6, size=0) +
+  theme_minimal() +
+  theme(strip.background = element_blank(),
+  strip.text.x = element_blank(),
+  legend.position = "none",
+  axis.text.y = element_blank())
+
+p2 <- ggplot(df.quirkle, aes(group=match)) +
+  geom_rect(aes(xmin=round-0.5*value/max_value, xmax=round+0.5*value/max_value, 
+                ymin=as.integer(name), ymax=as.integer(name)+1, 
+                fill=name, color=name, alpha=value), size=0) +
+  geom_rect(data=df.totals, 
+            aes(xmin = max_round+1, xmax = max_round+1+2*score/max_score,
+                ymin = as.integer(name), ymax = as.integer(name)+1,
+                fill=name, color=name), alpha=0.6, size=0) +
+  geom_text(data=df.totals, 
+            aes(x = max_round+1+2*score/max_score,
+                y = as.integer(name), label=score), 
+            color="grey65", size=3, hjust=-0.2, vjust=-0.5) +
+  scale_size_area(max_size=8) +
+  scale_x_continuous(breaks = c(0,5,10,15)) +
+  labs(x = "Round", y = "") +
+  facet_wrap(~desc(match), ncol=1) +
+  theme_minimal() +
+  theme(strip.background = element_blank(),
+  strip.text.x = element_blank(),
+  legend.position = "none",
+  axis.text.y = element_blank())
+  
+```
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE, fig.width=6, fig.height=8}
+p2
+```
+
+```{r, include=FALSE, echo=FALSE, warning=FALSE, message=FALSE}
+
+df.test <- df.quirkle %>% 
+  group_by(round) %>% 
+  summarise(md = median(value, na.rm=TRUE), sd = sd(value, na.rm=TRUE),
+            mn = mean(value, na.rm=TRUE), sum = sum(value, na.rm=TRUE))
+
+p3 <- ggplot(df.test, aes(x=round, y=sum)) + 
+  geom_linerange(aes(ymin=score-sd, ymax=score+sd), size=0.4, color="grey65") +
+  geom_line() +
+  geom_point(shape=21, size=4, fill="grey65", color="grey40", alpha=0.9) +
+  theme_minimal()
+
+p3 <- ggplot(df.test) +
+  geom_col(aes(x=round, y=md)) +
+  theme_minimal()
+
+p3 <- ggplot(df.quirkle) +
+  geom_boxplot(aes(x=round, y=value, group=round, fill=name), alpha=0.7) +
+  facet_wrap(~name, ncol=1) +
+  theme_minimal()
+```
+
+```{r, warning=FALSE, message=FALSE}
+df.quirkle %>% group_by(name) %>% summarise(score = sum(value, na.rm=TRUE)) %>% arrange(desc(score))
+```
+
