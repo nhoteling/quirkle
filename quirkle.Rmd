@@ -11,6 +11,8 @@ library(ggplot2)
 library(lubridate)
 library(dplyr)
 library(tidyr)
+
+# https://bookdown.org/yihui/rmarkdown-cookbook/latex-logo.html
 ```
 
 Scores from family Quirkle matches, last updated <b> `r format(Sys.time(), '%B %d, %Y')` </b>.
