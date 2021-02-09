@@ -12,16 +12,19 @@ library(lubridate)
 library(dplyr)
 library(tidyr)
 library(htmltools)
+library(readr)
+library(stringr)
+library(plotly)
+
+library(r2d3)
 
 ```
 
 ```{r, echo=FALSE}
+# Add image by title
 htmltools::img(src = knitr::image_uri(file.path(getwd(),"img/quirkle-greens.png")),
                style = 'position:absolute; top:10px; left:415px; padding:10px; width:300px; opacity:0.7')
 
-#htmltools::img(src = knitr::image_uri(file.path(R.home("doc"), "html", "logo.jpg")), 
-#               alt = 'logo', 
-#               style = 'position:absolute; top:0; right:0; padding:10px;')
 # https://stackoverflow.com/questions/43009788/insert-a-logo-in-upper-right-corner-of-r-markdown-html-document/43010632
 # https://bookdown.org/yihui/rmarkdown-cookbook/latex-logo.html
 ```
@@ -55,7 +58,8 @@ df.scores <- do.call(rbind,d)
 df.quirkle <- df.scores %>% 
   select(match, round, Lu, Cr, Co, Na) %>%
   pivot_longer(cols = c("Lu", "Cr", "Co", "Na")) %>%
-  mutate(name = factor(name, levels = c("Co","Lu","Cr","Na")))
+  mutate(name = factor(name, levels = c("Co","Lu","Cr","Na"))) %>%
+  arrange(match, round, name)
 ```
 
 
@@ -89,7 +93,8 @@ p2 <- ggplot(df.quirkle, aes(group=match)) +
                  size=0.2, color="grey90", alpha=0.4) +
   geom_rect(aes(xmin=round-0.5*value/max_value, xmax=round+0.5*value/max_value, 
                 ymin=as.integer(name), ymax=as.integer(name)+1, 
-                fill=name, color=name, alpha=value), size=0) +
+                fill=name, color=name, alpha=value),
+            size=0) +
   geom_rect(data=df.totals, 
             aes(xmin = max_round+1, xmax = max_round+1+2*score/max_score,
                 ymin = as.integer(name), ymax = as.integer(name)+1,
@@ -118,28 +123,95 @@ p2 <- ggplot(df.quirkle, aes(group=match)) +
 p2
 ```
 
-```{r, include=FALSE, echo=FALSE, warning=FALSE, message=FALSE}
-# Some additional testing
-# ...more to do here...
-df.test <- df.quirkle %>% 
-  group_by(round) %>% 
-  summarise(md = median(value, na.rm=TRUE), sd = sd(value, na.rm=TRUE),
-            mn = mean(value, na.rm=TRUE), sum = sum(value, na.rm=TRUE))
+```{r, echo=FALSE, message=FALSE, warning=FALSE, fig.width=6, fig.height=8}
+# Create ggplotly figure from the ggplot
+#
+# ggplotly does a lot of things automatically that are
+# diffucult to change:
+# - I can't seem to disable tooltips, only change the text
+# - ggplotly adds axis lines even though I removed them for ggplot
+# - sizes & text positions need a little adjustment in some cases
+#
 
-p3 <- ggplot(df.test, aes(x=round, y=sum)) + 
-  geom_linerange(aes(ymin=score-sd, ymax=score+sd), size=0.4, color="grey65") +
-  geom_line() +
-  geom_point(shape=21, size=4, fill="grey65", color="grey40", alpha=0.9) +
-  theme_minimal()
+fig <- ggplotly(p2) %>% 
+  style(textposition = "top right")
 
-p3 <- ggplot(df.test) +
-  geom_col(aes(x=round, y=md)) +
-  theme_minimal()
+# Change hover text for data points
+new_text <- function(fig, i) {
+  v <- fig$x$data
+  x0 <- v[[i]]$name
+  x1 <- parse_number(str_sub(v[[i]]$text, str_locate(v[[i]]$text, "match:")[2]))
+  x2 <- mean(v[[i]]$x[1:4])
+  x3 <- round(max_value * (v[[i]]$x[4] - v[[i]]$x[1]))  # max_value from chunk above
+  text <- paste("name: ",x0, "<br />",
+                "match: ", x1, "<br />",
+                "round: ", x2, "<br />",
+                "points: ", x3, 
+                sep = "")
+  return(text)
+}
 
-p3 <- ggplot(df.quirkle) +
-  geom_boxplot(aes(x=round, y=value, group=round, fill=name), alpha=0.7) +
-  facet_wrap(~name, ncol=1) +
-  theme_minimal()
+len <- length(fig$x$data)
+nmatches <- length(unique(df.quirkle$match))
+
+# change the tooltips
+for (i in (nmatches+1):344) {
+  fig$x$data[[i]]$text <- new_text(fig, i)
+}
+
+# change tooltips for bars
+for (i in 345:len-nmatches) {
+  fig$x$data[[i]]$text <- "" 
+}
+
+# change toolstips for text
+for (i in (len-nmatches+1):len) {
+  fig$x$data[[i]]$hovertext <- "" 
+}
+
+# Draw the ggplotly figure
+#fig
 ```
 
+
+
+```{r, include=FALSE, echo=FALSE, warning=FALSE, message=FALSE}
+#
+# Prepare data for d3 vis
+d.data <- list(quirkle = df.quirkle, totals = df.totals)
+dd <- jsonlite::toJSON(d.data)
+
+```
+
+```{d3, data=dd, options=list(color='steelblue'), height=900}
+// D3 code chunk
+
+var colorScale = d3.scaleOrdinal().domain(["Na", "Cr", "Lu", "Co"])
+                   .range(['#ddaeff','#67d9dc','#b0cf66','#fbada7']);
+                   
+var nameScale = d3.scaleBand()
+                  .domain(["Na", "Cr", "Lu", "Co"])
+                  .range([5, 65, 105, 145]);
+var yScale = d3.scaleLinear()
+               .domain([9, 20])
+               .range([5,900]);
+var xScale = d3.scaleLinear()
+               .domain([1,18])
+               .range([10,450]);
+var alphaScale = d3.scaleSqrt()
+                   .domain([1,24])
+                   .range([0.3,1.0]);
+
+svg.selectAll('rect')
+  .data(data.quirkle)
+  .enter()
+    .append('rect')
+      .attr('width', function(d, i) { return d.value; })
+      .attr('height', '15px')
+      .attr('x', function(d, i) { return xScale(d.round) - 0.5*d.value;})
+      .attr('y', function(d, i) { return height - (yScale(d.match)) + nameScale(d.name); })
+      .attr('fill', function(d, i) { return colorScale(d.name); })
+      .attr('opacity', function(d, i) { return alphaScale(d.value); });
+
+```
 
