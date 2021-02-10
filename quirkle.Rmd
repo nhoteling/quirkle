@@ -181,9 +181,12 @@ for (i in (len-nmatches+1):len) {
 d.data <- list(quirkle = df.quirkle, totals = df.totals)
 dd <- jsonlite::toJSON(d.data)
 
+# Write json file for my pure d3.js version
+write(dd,"data/quirkle.json")
+
 ```
 
-```{d3, data=dd, options=list(color='steelblue'), height=900}
+```{d3, data=dd, height=900, width=800}
 // D3 code chunk
 
 var colorScale = d3.scaleOrdinal().domain(["Na", "Cr", "Lu", "Co"])
@@ -201,6 +204,40 @@ var xScale = d3.scaleLinear()
 var alphaScale = d3.scaleSqrt()
                    .domain([1,24])
                    .range([0.3,1.0]);
+var barScale = d3.scaleLinear()
+                 .domain([70,150])
+                 .range([25,75])
+
+
+line = d3.line()
+         .x(function(d) {return xScale(d.score);})
+         .y(function(d) {return yScale(d.match);});
+
+
+
+
+// Bars at right of figure
+svg.selectAll('rect')
+  .data(data.totals)
+  .enter()
+    .append('rect')
+      .attr('width', function(d, i) { return barScale(d.score); })
+      .attr('height', '15px')
+      .attr('x', function(d, i) { return xScale(19); })
+      .attr('y', function(d, i) { return height - (yScale(d.match)) + nameScale(d.name); })
+      .attr('fill', function(d, i) { return colorScale(d.name); })
+      .attr('opacity', 0.8);
+
+
+svg.selectAll('text')
+   .data(data.totals)
+   .enter()
+   .append('text')
+      .text(function(d, i) { return d.score; })
+      .attr('x', function(d, i) { return xScale(19) + barScale(d.score) + 5;})
+      .attr('y', function(d, i) { return height - (yScale(d.match)) + nameScale(d.name) + 12; })
+      .attr('font-size', '11px')
+      .attr('fill', 'grey');
 
 svg.selectAll('rect')
   .data(data.quirkle)
@@ -212,6 +249,9 @@ svg.selectAll('rect')
       .attr('y', function(d, i) { return height - (yScale(d.match)) + nameScale(d.name); })
       .attr('fill', function(d, i) { return colorScale(d.name); })
       .attr('opacity', function(d, i) { return alphaScale(d.value); });
+      
+
+
 
 ```
 
