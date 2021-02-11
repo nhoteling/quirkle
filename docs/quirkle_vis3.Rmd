@@ -1,0 +1,42 @@
+---
+title: "Quirkle Scores"
+---
+
+
+```{r, echo=FALSE}
+# Add image by title
+htmltools::img(src = knitr::image_uri(file.path(getwd(),"../img/quirkle-greens.png")),
+               style = 'position:absolute; top:60px; left:415px; padding:10px; width:300px; opacity:0.7')
+
+```
+
+
+Scores from family Quirkle matches, last updated <b> `r format(Sys.time(), '%B %d, %Y')` </b>.
+
+
+
+
+
+```{r, include=TRUE, echo=FALSE, warning=FALSE, message=FALSE}
+#
+# Prepare data for d3 vis
+d.data <- list(quirkle = df.quirkle[ complete.cases(df.quirkle), ], totals = df.totals)
+dd <- jsonlite::toJSON(d.data)
+
+# Write json file for my pure d3.js version
+#write(dd,"data/quirkle.json")
+
+r2d3::r2d3(data=jsonlite::read_json("../data/quirkle.json"),
+     dependencies=list("../js/d3-tip.js", "../js/d3-legend.js"), 
+     css="../css/styles.css",
+     script="../js/quirkle.js",
+     height=900,
+     d3_version = 4)
+
+# height = 900
+# width = 800
+```
+
+
+
+

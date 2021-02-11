@@ -1,0 +1,103 @@
+---
+title: "Quirkle Scores"
+---
+
+
+```{r, echo=FALSE}
+# Add image by title
+htmltools::img(src = knitr::image_uri(file.path(getwd(),"../img/quirkle-greens.png")),
+               style = 'position:absolute; top:60px; left:415px; padding:10px; width:300px; opacity:0.7')
+
+```
+
+<br />
+Scores from family Quirkle matches, last updated <b> `r format(Sys.time(), '%B %d, %Y')` </b>.
+<br />
+
+
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE, include=FALSE}
+# Summary figure
+p2 <- ggplot(df.quirkle, aes(group=match)) +
+  geom_linerange(aes(xmin=-Inf, xmax=max_round+1, y=as.integer(name)+0.5), 
+                 size=0.2, color="grey90", alpha=0.4) +
+  geom_rect(aes(xmin=round-0.5*value/max_value, xmax=round+0.5*value/max_value, 
+                ymin=as.integer(name), ymax=as.integer(name)+1, 
+                fill=name, color=name, alpha=value),
+            size=0) +
+  geom_rect(data=df.totals, 
+            aes(xmin = max_round+1, xmax = max_round+1+2*score/max_score,
+                ymin = as.integer(name), ymax = as.integer(name)+1,
+                fill=name, color=name), alpha=0.6, size=0) +
+  geom_text(data=df.totals, 
+            aes(x = max_round+1+2*score/max_score,
+                y = as.integer(name), label=score), 
+            color="grey65", size=3, hjust=-0.2, vjust=-0.5) +
+  scale_size_area(max_size=8) +
+  scale_x_continuous(breaks = c(0,5,10,15)) +
+  labs(x = "Round", y = "") +
+  facet_wrap(~desc(match), ncol=1) +
+  theme_void() +
+  #theme_minimal() +
+  theme(strip.background = element_blank(),
+  strip.text.x = element_blank(),
+  legend.position = "none",
+  axis.text.y = element_blank(),
+  axis.text.x = element_text(size=10, color="grey65"),
+  axis.title.x = element_text(size=12, color="grey55"))
+  
+```
+
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE, fig.width=6, fig.height=8}
+# Create ggplotly figure from the ggplot
+#
+# ggplotly does a lot of things automatically that are
+# diffucult to change:
+# - I can't seem to disable tooltips, only change the text
+# - ggplotly adds axis lines even though I removed them for ggplot
+# - sizes & text positions need a little adjustment in some cases
+#
+
+fig <- ggplotly(p2) %>% 
+  style(textposition = "top right")
+
+# Change hover text for data points
+new_text <- function(fig, i) {
+  v <- fig$x$data
+  x0 <- v[[i]]$name
+  x1 <- parse_number(str_sub(v[[i]]$text, str_locate(v[[i]]$text, "match:")[2]))
+  x2 <- mean(v[[i]]$x[1:4])
+  x3 <- round(max_value * (v[[i]]$x[4] - v[[i]]$x[1]))  # max_value from chunk above
+  text <- paste("name: ",x0, "<br />",
+                "match: ", x1, "<br />",
+                "round: ", x2, "<br />",
+                "points: ", x3, 
+                sep = "")
+  return(text)
+}
+
+len <- length(fig$x$data)
+nmatches <- length(unique(df.quirkle$match))
+
+# change the tooltips
+for (i in (nmatches+1):344) {
+  fig$x$data[[i]]$text <- new_text(fig, i)
+}
+
+# change tooltips for bars
+for (i in 345:len-nmatches) {
+  fig$x$data[[i]]$text <- "" 
+}
+
+# change toolstips for text
+for (i in (len-nmatches+1):len) {
+  fig$x$data[[i]]$hovertext <- "" 
+}
+
+# Draw the ggplotly figure
+fig
+```
+
+
+

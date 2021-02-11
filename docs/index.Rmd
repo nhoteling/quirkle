@@ -1,0 +1,28 @@
+---
+title: "Quirkle Scores"
+author: "Nathan Hoteling"
+date: "`r format(Sys.time(), '%B %Y')`"
+output: 
+  html_document:
+    css: "../css/styles.css"
+---
+
+
+<br />
+
+These pages show versions of an experimental plot created with data gathered over several Quirkle games (note: the proper spelling is actually _qwerkle_).   
+
+- The first page shows the original version of the plot created with `ggplot`  
+- The next page shows an interactive version with plotly created with `ggplotly`  
+- The last page shows a version created with d3 and rendered here with `r2d3`  
+
+This is a work in progress...
+
+<br />
+
+
+```{r, echo=FALSE}
+# Add image by title
+htmltools::img(src = knitr::image_uri(file.path(getwd(),"../img/quirkle-greens.png")),
+               style = 'position:absolute; top:60px; left:415px; padding:10px; width:300px; opacity:0.7')
+```

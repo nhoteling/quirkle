@@ -1,0 +1,19 @@
+name: "Quirkle Scores"
+navbar:
+  title: "HOME"
+  left:
+    - text: "GGPLOT"
+      href: quirkle_vis1.html
+    - text: "PLOTLY"
+      href: quirkle_vis2.html
+    - text: "D3"
+      href: quirkle_vis3.html
+    - text: "Methods"
+      href: methods.html  
+output_dir: "."
+output:
+  html_document:
+    theme: yeti
+    highlight: textmate
+#    include:
+#      after_body: _footer.html
