@@ -1,5 +1,6 @@
 ---
 title: "Quirkle Scores"
+subtitle: "Or, one plot three ways"
 author: "Nathan Hoteling"
 date: "`r format(Sys.time(), '%B %Y')`"
 output: 
@@ -7,10 +8,11 @@ output:
     css: "../css/styles.css"
 ---
 
+![](../img/quirkle-greens.png){width=250px}
 
 <br />
 
-These pages show versions of an experimental plot created with data gathered over several Quirkle games (note: the proper spelling is actually _qwerkle_).   
+These pages show an experimental plot created with data gathered over several family [Quirkle](https://en.wikipedia.org/wiki/Qwirkle) matches (note: the proper spelling is actually _qwirkle_, although I've seen it written _qwerkle_ and _quirkle_ as well.  I use the latter mainly because it's a typo that managed to propagate throughout my code, plus I like that spelling).   
 
 - The first page shows the original version of the plot created with `ggplot`  
 - The next page shows an interactive version with plotly created with `ggplotly`  
@@ -23,6 +25,6 @@ This is a work in progress...
 
 ```{r, echo=FALSE}
 # Add image by title
-htmltools::img(src = knitr::image_uri(file.path(getwd(),"../img/quirkle-greens.png")),
-               style = 'position:absolute; top:60px; left:415px; padding:10px; width:300px; opacity:0.7')
+#htmltools::img(src = knitr::image_uri(file.path(getwd(),"../img/quirkle-greens.png")),
+#               style = 'position:absolute; top:60px; left:415px; padding:10px; width:300px; #opacity:0.7')
 ```

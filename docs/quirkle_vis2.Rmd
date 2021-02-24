@@ -2,36 +2,50 @@
 title: "Quirkle Scores"
 ---
 
+![](../img/quirkle-greens.png){width=250px}
 
 ```{r, echo=FALSE}
 # Add image by title
-htmltools::img(src = knitr::image_uri(file.path(getwd(),"../img/quirkle-greens.png")),
-               style = 'position:absolute; top:60px; left:415px; padding:10px; width:300px; opacity:0.7')
+#htmltools::img(src = knitr::image_uri(file.path(getwd(),"../img/quirkle-greens.png")),
+#               style = 'position:absolute; top:60px; left:415px; padding:10px; width:300px; #opacity:0.7')
 
 ```
 
-<br />
+
 Scores from family Quirkle matches, last updated <b> `r format(Sys.time(), '%B %d, %Y')` </b>.
 <br />
-
+<br />
 
 
 ```{r, echo=FALSE, message=FALSE, warning=FALSE, include=FALSE}
 # Summary figure
-p2 <- ggplot(df.quirkle, aes(group=match)) +
+
+df.quirkle2 <- df.quirkle %>% 
+  mutate(xmin = round - 0.5*value/max_value,
+         xmax = round + 0.5*value/max_value,
+         ymin = as.integer(name),
+         ymax = as.integer(name) + 1)
+
+df.totals2 <- df.totals %>%
+  mutate(xmin = max_round + 1, 
+         xmax = max_round + 1 + 2*score/max_score,
+         ymin = as.integer(name),
+         ymax = as.integer(name) + 1)
+
+p2 <- ggplot(df.quirkle2, aes(group=match)) +
   geom_linerange(aes(xmin=-Inf, xmax=max_round+1, y=as.integer(name)+0.5), 
                  size=0.2, color="grey90", alpha=0.4) +
-  geom_rect(aes(xmin=round-0.5*value/max_value, xmax=round+0.5*value/max_value, 
-                ymin=as.integer(name), ymax=as.integer(name)+1, 
-                fill=name, color=name, alpha=value),
-            size=0) +
-  geom_rect(data=df.totals, 
-            aes(xmin = max_round+1, xmax = max_round+1+2*score/max_score,
-                ymin = as.integer(name), ymax = as.integer(name)+1,
+  geom_rect(aes(xmin=xmin, xmax=xmax, ymin=ymin, ymax=ymax, 
+                fill=name, color=name, alpha=value), size=0) +
+# geom_rect(aes(xmin=round-0.5*value/max_value, xmax=round+0.5*value/max_value, 
+#                ymin=as.integer(name), ymax=as.integer(name)+1, 
+#                fill=name, color=name, alpha=value),
+#            size=0) +
+  geom_rect(data=df.totals2, 
+            aes(xmin = xmin, xmax = xmax, ymin = ymin, ymax = ymax,
                 fill=name, color=name), alpha=0.6, size=0) +
-  geom_text(data=df.totals, 
-            aes(x = max_round+1+2*score/max_score,
-                y = as.integer(name), label=score), 
+  geom_text(data=df.totals2, 
+            aes(x = xmax, y = ymin, label=score), 
             color="grey65", size=3, hjust=-0.2, vjust=-0.5) +
   scale_size_area(max_size=8) +
   scale_x_continuous(breaks = c(0,5,10,15)) +
@@ -55,9 +69,10 @@ p2 <- ggplot(df.quirkle, aes(group=match)) +
 # ggplotly does a lot of things automatically that are
 # diffucult to change:
 # - I can't seem to disable tooltips, only change the text
+# - browsing the data in the plotly object, it seems like the order is not sensible /  predictable?
 # - ggplotly adds axis lines even though I removed them for ggplot
 # - sizes & text positions need a little adjustment in some cases
-#
+# - adding the option tooltip = "text" as in the web tutorial triggers an error
 
 fig <- ggplotly(p2) %>% 
   style(textposition = "top right")
@@ -77,18 +92,23 @@ new_text <- function(fig, i) {
   return(text)
 }
 
+#
+# Use plotly_json(fig) to explore structure of the object
+# data[0:10] are lines
+# 
+
 len <- length(fig$x$data)
 nmatches <- length(unique(df.quirkle$match))
 
 # change the tooltips
-for (i in (nmatches+1):344) {
-  fig$x$data[[i]]$text <- new_text(fig, i)
-}
+#for (i in (nmatches+1):385) {
+#  fig$x$data[[i]]$text <- new_text(fig, i)
+#}
 
 # change tooltips for bars
-for (i in 345:len-nmatches) {
-  fig$x$data[[i]]$text <- "" 
-}
+#for (i in 345:len-nmatches) {
+#  fig$x$data[[i]]$text <- "" 
+#}
 
 # change toolstips for text
 for (i in (len-nmatches+1):len) {

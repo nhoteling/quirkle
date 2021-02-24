@@ -17,29 +17,42 @@
  
  
  // D3 code chunk
+var margin = {top:10, right:10, bottom:100, left:10};
+var quirkle = data.quirkle;
+var totals = data.totals;
+var min_round = d3.min(quirkle, d => d.round);
+var max_round = d3.max(quirkle, d => d.round);
+var min_value = d3.min(quirkle, d => d.value);
+var max_value = d3.max(quirkle, d => d.value);
+var min_score = d3.min(totals, d => d.score);
+var max_score = d3.max(totals, d => d.score);
 
 
 // Scales //
 var colorScale = d3.scaleOrdinal().domain(["Na", "Cr", "Lu", "Co"])
                    .range(['#ddaeff','#67d9dc','#b0cf66','#fbada7']);
-                   
+
+// Adjustments to yScale                   
 var nameScale = d3.scaleBand()
                   .domain(["Na", "Cr", "Lu", "Co"])
                   .range([0, 60, 100, 140]);
+// yScale
 var yScale = d3.scaleLinear()
-               .domain([9, 20])
-               .range([800,1]);
+                .domain([ d3.min(quirkle, d => d.match), 
+                          d3.max(quirkle, d => d.match) ])
+               //.domain([9, 20])
+               .range([height - margin.bottom, 1]);
 var xScale = d3.scaleLinear()
-               .domain([1,18])
-               .range([10,450]);
+               .domain([ min_round, max_round])
+               .range([margin.left ,450]);
 var alphaScale = d3.scaleSqrt()
-                   .domain([1,24])
+                   .domain([ min_value, max_value ])
                    .range([0.3,1.0]);
 var barScale = d3.scaleLinear()
-                 .domain([70,150])
+                 .domain([ min_score, max_score ])   // 70, 150
                  .range([25,75]);
 
-
+var xAxis = d3.axisBottom(xScale);
 
 
 /////////////////////////////////////////////////////////////
@@ -55,9 +68,10 @@ var barScale = d3.scaleLinear()
 var tip = d3.tip()
   .attr('class', 'd3-tip')
   .offset([0, 0])
-  .html(function(d) { return d.value; });
+  .html(function(d) { return "Name: " + d.name + "<br />Value: " + d.value; });
 svg.call(tip);
 
+// Gridlines
 svg.selectAll("line")
   .data(data.totals)
   .enter()
@@ -70,7 +84,7 @@ svg.selectAll("line")
       .style("stroke-width", "1px")
       .style("pointer-events","none");
       
-// Bars at right of figure
+// Bars to right of figure
 svg.selectAll('rect')
   .data(data.totals)
   .enter()
@@ -79,7 +93,7 @@ svg.selectAll('rect')
     .append('rect')
       .attr('width', function(d, i) { return barScale(d.score); })
       .attr('height', '15px')
-      .attr('x', function(d, i) { return xScale(19); })
+      .attr('x', function(d, i) { return xScale(max_round+1); })
       .attr('y', function(d, i) { return yScale(d.match) + nameScale(d.name); })
       .attr('fill', function(d, i) { return colorScale(d.name); })
       .attr('opacity', 0.8);
@@ -111,6 +125,17 @@ svg.selectAll('g')
       .on("mouseover",tip.show)
 			.on("mouseout",tip.hide);
 
+// Axis styling doesn't seem to work well with r2d3...
+svg.append("g")
+  .attr("class", "axis")
+  .attr("transform", "translate(0," + (height-25) + ")")
+  //.style("fill", "grey")
+  //.style("stroke", "grey")
+  //.style("shape-rendering", "crispEdges")
+  //.style("font-size", "14px")
+  .call(xAxis);
+ 
+ 
  
  /////////////////////////////
 

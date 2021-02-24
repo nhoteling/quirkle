@@ -2,17 +2,17 @@
 title: "Quirkle Scores"
 ---
 
+![](../img/quirkle-greens.png){width=250px}
 
 ```{r, echo=FALSE}
 # Add image by title
-htmltools::img(src = knitr::image_uri(file.path(getwd(),"../img/quirkle-greens.png")),
-               style = 'position:absolute; top:60px; left:415px; padding:10px; width:300px; opacity:0.7')
+#htmltools::img(src = knitr::image_uri(file.path(getwd(),"../img/quirkle-greens.png")),
+#               style = 'position:absolute; top:60px; left:415px; padding:10px; width:300px; #opacity:0.7')
 ```
 
-<br /> 
 Scores from family Quirkle matches, last updated <b> `r format(Sys.time(), '%B %d, %Y')` </b>.
 <br />
-
+<br />
 
 
 

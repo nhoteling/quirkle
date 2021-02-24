@@ -2,19 +2,69 @@
 title: "Quirkle Scores"
 ---
 
+![](../img/quirkle-greens.png){width=250px}
 
 ```{r, echo=FALSE}
-# Add image by title
-htmltools::img(src = knitr::image_uri(file.path(getwd(),"../img/quirkle-greens.png")),
-               style = 'position:absolute; top:60px; left:415px; padding:10px; width:300px; opacity:0.7')
+# Add image adjacent to title
+# 
+#htmltools::img(src = knitr::image_uri(file.path(getwd(),"../img/quirkle-greens.png")),
+#               style = 'float:left; top:60px; left:415px; padding:10px; width:300px; #opacity:0.7')
+
+#htmltools::img(src = knitr::image_uri(file.path(getwd(),"../img/quirkle-greens.png")),
+#               style = 'position:relative; top:60px; left:415px; padding:10px; width:300px; #opacity:0.7')
 
 ```
 
 
 Scores from family Quirkle matches, last updated <b> `r format(Sys.time(), '%B %d, %Y')` </b>.
+<br />
+<br />
+
+```{css, echo=FALSE}
+.d3-tip {
+      line-height: 1;
+      padding: 6px;
+      background: rgba(0, 0, 0, 0.8);
+      color: #fff;
+      border-radius: 4px;
+      font-size: 12px;
+      pointer-events: none;
+    }
+ 
+    /* Creates a small triangle extender for the tooltip */
+.d3-tip:after {
+      box-sizing: border-box;
+      display: inline;
+      font-size: 10px;
+      width: 100%;
+      line-height: 1;
+      color: rgba(0, 0, 0, 0.8);
+      content: "\25BC";
+      position: absolute;
+      text-align: center;
+      pointer-events: none;
+    }
+ 
+/* Style northward tooltips specifically */
+    .d3-tip.n:after {
+      margin: -2px 0 0 0;
+      top: 100%;
+      left: 0;
+    }
 
 
 
+.axis text {
+    font-size: 14px;
+    fill: grey;
+}
+
+.axis line {
+  stroke: #fff;
+  stroke-opacity: .2;
+  shape-rendering: crispEdges;
+}
+```
 
 
 ```{r, include=TRUE, echo=FALSE, warning=FALSE, message=FALSE}
@@ -23,6 +73,7 @@ Scores from family Quirkle matches, last updated <b> `r format(Sys.time(), '%B %
 d.data <- list(quirkle = df.quirkle[ complete.cases(df.quirkle), ], totals = df.totals)
 dd <- jsonlite::toJSON(d.data)
 
+nmatches <- length(unique(df.totals$match))
 # Write json file for my pure d3.js version
 #write(dd,"data/quirkle.json")
 
@@ -30,7 +81,7 @@ r2d3::r2d3(data=jsonlite::read_json("../data/quirkle.json"),
      dependencies=list("../js/d3-tip.js", "../js/d3-legend.js"), 
      css="../css/styles.css",
      script="../js/quirkle.js",
-     height=900,
+     height = 80*nmatches,  #900,
      d3_version = 4)
 
 # height = 900
