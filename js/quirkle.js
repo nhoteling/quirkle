@@ -104,7 +104,7 @@ svg.selectAll('text')
    .enter()
    .append('text')
       .text(function(d, i) { return d.score; })
-      .attr('x', function(d, i) { return xScale(19) + barScale(d.score) + 5;})
+      .attr('x', function(d, i) { return xScale(max_round+1) + barScale(d.score) + 5;})
       .attr('y', function(d, i) { return yScale(d.match) + nameScale(d.name) + 12; })
       .attr('font-size', '11px')
       .attr('fill', 'grey');
